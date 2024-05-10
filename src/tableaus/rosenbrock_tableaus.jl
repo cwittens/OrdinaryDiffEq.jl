@@ -214,11 +214,11 @@ function Rodas3PTableau(T, T2)
         h21, h22, h23, h24, h25, h31, h32, h33, h34, h35, h2_21, h2_22, h2_23, h2_24, h2_25)
 end
 
-@ROS23(:tableau)
+#@ROS23(:tableau)
 
-@ROS34PW(:tableau)
+#@ROS34PW(:tableau)
 
-@Rosenbrock4(:tableau)
+#@Rosenbrock4(:tableau)
 
 struct RodasTableau{T, T2}
     a21::T
@@ -781,7 +781,7 @@ function Rodas5PTableau(T, T2)
         h38, h41, h42, h43, h44, h45, h46, h47, h48)
 end
 
-@RosenbrockW6S4OS(:tableau)
+#@RosenbrockW6S4OS(:tableau)
 
 #=
 # alpha_ij

@@ -27,7 +27,7 @@ end
 
 @muladd function perform_step!(integrator, cache::Rosenbrock23Cache, repeat_step = false)
     @unpack t, dt, uprev, u, f, p, opts = integrator
-    @unpack k₁, k₂, k₃, du1, du2, f₁, fsalfirst, fsallast, dT, J, W, tmp, uf, tf, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack k₁, k₂, k₃, du1, du2, f₁, fsalfirst, fsallast, dT, J, W, tmp, uf, tf, linsolve_tmp, jac_config, atmp, weight, step_limiter! = cache
     @unpack c₃₂, d = cache.tab
 
     # Assignments
@@ -89,6 +89,8 @@ end
     @.. broadcast=false k₂+=k₁
     @.. broadcast=false u=uprev + dt * k₂
 
+    step_limiter!(u, integrator, p, t + dt) # not sure if this is the correct position.
+
     if integrator.opts.adaptive
         f(fsallast, u, p, t + dt)
         integrator.stats.nf += 1
@@ -136,7 +138,7 @@ end
 @muladd function perform_step!(integrator, cache::Rosenbrock23Cache{<:Array},
         repeat_step = false)
     @unpack t, dt, uprev, u, f, p, opts = integrator
-    @unpack k₁, k₂, k₃, du1, du2, f₁, fsalfirst, fsallast, dT, J, W, tmp, uf, tf, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack k₁, k₂, k₃, du1, du2, f₁, fsalfirst, fsallast, dT, J, W, tmp, uf, tf, linsolve_tmp, jac_config, atmp, weight, step_limiter! = cache
     @unpack c₃₂, d = cache.tab
 
     # Assignments
@@ -208,6 +210,8 @@ end
         u[i] = uprev[i] + dt * k₂[i]
     end
 
+    step_limiter!(u, integrator, p, t + dt)
+
     if integrator.opts.adaptive
         f(fsallast, u, p, t + dt)
         integrator.stats.nf += 1
@@ -274,7 +278,7 @@ end
 
 @muladd function perform_step!(integrator, cache::Rosenbrock32Cache, repeat_step = false)
     @unpack t, dt, uprev, u, f, p, opts = integrator
-    @unpack k₁, k₂, k₃, du1, du2, f₁, fsalfirst, fsallast, dT, J, W, tmp, uf, tf, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack k₁, k₂, k₃, du1, du2, f₁, fsalfirst, fsallast, dT, J, W, tmp, uf, tf, linsolve_tmp, jac_config, atmp, weight, step_limiter! = cache
     @unpack c₃₂, d = cache.tab
 
     # Assignments
@@ -355,6 +359,8 @@ end
     integrator.stats.nsolve += 1
 
     @.. broadcast=false u=uprev + dto6 * (k₁ + 4k₂ + k₃)
+
+    step_limiter!(u, integrator, p, t + dt)
 
     if integrator.opts.adaptive
         @.. broadcast=false tmp=dto6 * (k₁ - 2 * k₂ + k₃)
@@ -526,8 +532,8 @@ end
 
 function initialize!(integrator,
         cache::Union{Rosenbrock33ConstantCache,
-            Rosenbrock34ConstantCache,
-            Rosenbrock4ConstantCache})
+            Rosenbrock34ConstantCache,})
+           # Rosenbrock4ConstantCache})
     integrator.kshortsize = 2
     integrator.k = typeof(integrator.k)(undef, integrator.kshortsize)
     integrator.fsalfirst = integrator.f(integrator.uprev, integrator.p, integrator.t)
@@ -541,8 +547,8 @@ end
 
 function initialize!(integrator,
         cache::Union{Rosenbrock33Cache,
-            Rosenbrock34Cache,
-            Rosenbrock4Cache})
+            Rosenbrock34Cache,})
+          #  Rosenbrock4Cache
     integrator.kshortsize = 2
     @unpack fsalfirst, fsallast = cache
     integrator.fsalfirst = fsalfirst
@@ -628,7 +634,7 @@ end
 
 @muladd function perform_step!(integrator, cache::Rosenbrock33Cache, repeat_step = false)
     @unpack t, dt, uprev, u, f, p = integrator
-    @unpack du, du1, du2, fsalfirst, fsallast, k1, k2, k3, dT, J, W, uf, tf, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack du, du1, du2, fsalfirst, fsallast, k1, k2, k3, dT, J, W, uf, tf, linsolve_tmp, jac_config, atmp, weight, step_limiter! = cache
     @unpack a21, a31, a32, C21, C31, C32, b1, b2, b3, btilde1, btilde2, btilde3, gamma, c2, c3, d1, d2, d3 = cache.tab
 
     # Assignments
@@ -710,6 +716,9 @@ end
     integrator.stats.nsolve += 1
 
     @.. broadcast=false u=uprev + b1 * k1 + b2 * k2 + b3 * k3
+
+    step_limiter!(u, integrator, p, t + dt)
+
     f(fsallast, u, p, t + dt)
     integrator.stats.nf += 1
 
@@ -813,7 +822,7 @@ end
 
 @muladd function perform_step!(integrator, cache::Rosenbrock34Cache, repeat_step = false)
     @unpack t, dt, uprev, u, f, p = integrator
-    @unpack du, du1, du2, fsalfirst, fsallast, k1, k2, k3, k4, dT, J, W, uf, tf, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack du, du1, du2, fsalfirst, fsallast, k1, k2, k3, k4, dT, J, W, uf, tf, linsolve_tmp, jac_config, atmp, weight, step_limiter! = cache
     @unpack a21, a31, a32, a41, a42, a43, C21, C31, C32, C41, C42, C43, b1, b2, b3, b4, btilde1, btilde2, btilde3, btilde4, gamma, c2, c3, d1, d2, d3, d4 = cache.tab
 
     # Assignments
@@ -919,6 +928,9 @@ end
     integrator.stats.nsolve += 1
 
     @.. broadcast=false u=uprev + b1 * k1 + b2 * k2 + b3 * k3 + b4 * k4
+
+    step_limiter!(u, integrator, p, t + dt)
+
     f(fsallast, u, p, t + dt)
     integrator.stats.nf += 1
 
@@ -935,21 +947,21 @@ end
 
 #### ROS23 type method
 
-@ROS23(:init)
-@ROS23(:performstep)
+#@ROS23(:init)
+#@ROS23(:performstep)
 
 ################################################################################
 
 #### ROS34PW type method
 
-@ROS34PW(:init)
-@ROS34PW(:performstep)
+#@ROS34PW(:init)
+#@ROS34PW(:performstep)
 
 ################################################################################
 
 #### ROS4 type method
 
-@Rosenbrock4(:performstep)
+#@Rosenbrock4(:performstep)
 
 ################################################################################
 
@@ -1101,7 +1113,7 @@ end
 @muladd function perform_step!(
         integrator, cache::Union{Rodas23WCache, Rodas3PCache}, repeat_step = false)
     @unpack t, dt, uprev, u, f, p = integrator
-    @unpack du, du1, du2, dT, J, W, uf, tf, k1, k2, k3, k4, k5, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack du, du1, du2, dT, J, W, uf, tf, k1, k2, k3, k4, k5, linsolve_tmp, jac_config, atmp, weight, step_limiter! = cache
     @unpack a21, a41, a42, a43, C21, C31, C32, C41, C42, C43, C51, C52, C53, C54, gamma, c2, c3, d1, d2, d3 = cache.tab
 
     # Assignments
@@ -1212,6 +1224,8 @@ end
     du = u + k4 #-- p=2 solution
     u .+= k5
 
+    step_limiter!(u, integrator, p, t + dt) # not sure if this is the correct position.
+
     EEst = 0.0
     if integrator.opts.calck
         @unpack h21, h22, h23, h24, h25, h31, h32, h33, h34, h35, h2_21, h2_22, h2_23, h2_24, h2_25 = cache.tab
@@ -1252,7 +1266,7 @@ end
         integrator, cache::Union{Rodas23WCache{<:Array}, Rodas3PCache{<:Array}},
         repeat_step = false)
     @unpack t, dt, uprev, u, f, p = integrator
-    @unpack du, du1, du2, dT, J, W, uf, tf, k1, k2, k3, k4, k5, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack du, du1, du2, dT, J, W, uf, tf, k1, k2, k3, k4, k5, linsolve_tmp, jac_config, atmp, weight, step_limiter! = cache
     @unpack a21, a41, a42, a43, C21, C31, C32, C41, C42, C43, C51, C52, C53, C54, gamma, c2, c3, d1, d2, d3 = cache.tab
 
     # Assignments
@@ -1407,6 +1421,8 @@ end
     @inbounds @simd ivdep for i in eachindex(u)
         u[i] += k5[i]
     end
+
+    step_limiter!(u, integrator, p, t + dt)
 
     EEst = 0.0
     if integrator.opts.calck
@@ -1625,7 +1641,7 @@ end
 
 @muladd function perform_step!(integrator, cache::Rodas4Cache, repeat_step = false)
     @unpack t, dt, uprev, u, f, p = integrator
-    @unpack du, du1, du2, dT, J, W, uf, tf, k1, k2, k3, k4, k5, k6, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack du, du1, du2, dT, J, W, uf, tf, k1, k2, k3, k4, k5, k6, linsolve_tmp, jac_config, atmp, weight, step_limiter! = cache
     @unpack a21, a31, a32, a41, a42, a43, a51, a52, a53, a54, C21, C31, C32, C41, C42, C43, C51, C52, C53, C54, C61, C62, C63, C64, C65, gamma, c2, c3, c4, d1, d2, d3, d4 = cache.tab
 
     # Assignments
@@ -1766,6 +1782,8 @@ end
 
     u .+= k6
 
+    step_limiter!(u, integrator, p, t + dt)
+
     if integrator.opts.adaptive
         calculate_residuals!(atmp, k6, uprev, u, integrator.opts.abstol,
             integrator.opts.reltol, integrator.opts.internalnorm, t)
@@ -1784,7 +1802,7 @@ end
 
 @muladd function perform_step!(integrator, cache::Rodas4Cache{<:Array}, repeat_step = false)
     @unpack t, dt, uprev, u, f, p = integrator
-    @unpack du, du1, du2, dT, J, W, uf, tf, k1, k2, k3, k4, k5, k6, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack du, du1, du2, dT, J, W, uf, tf, k1, k2, k3, k4, k5, k6, linsolve_tmp, jac_config, atmp, weight, step_limiter! = cache
     @unpack a21, a31, a32, a41, a42, a43, a51, a52, a53, a54, C21, C31, C32, C41, C42, C43, C51, C52, C53, C54, C61, C62, C63, C64, C65, gamma, c2, c3, c4, d1, d2, d3, d4 = cache.tab
 
     # Assignments
@@ -1981,6 +1999,8 @@ end
     @inbounds @simd ivdep for i in eachindex(u)
         u[i] += k6[i]
     end
+
+    step_limiter!(u, integrator, p, t + dt)
 
     if integrator.opts.adaptive
         calculate_residuals!(atmp, k6, uprev, u, integrator.opts.abstol,
@@ -2204,7 +2224,7 @@ end
 
 @muladd function perform_step!(integrator, cache::Rosenbrock5Cache, repeat_step = false)
     @unpack t, dt, uprev, u, f, p = integrator
-    @unpack du, du1, du2, k1, k2, k3, k4, k5, k6, k7, k8, dT, J, W, uf, tf, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack du, du1, du2, k1, k2, k3, k4, k5, k6, k7, k8, dT, J, W, uf, tf, linsolve_tmp, jac_config, atmp, weight, step_limiter! = cache
     @unpack a21, a31, a32, a41, a42, a43, a51, a52, a53, a54, a61, a62, a63, a64, a65, C21, C31, C32, C41, C42, C43, C51, C52, C53, C54, C61, C62, C63, C64, C65, C71, C72, C73, C74, C75, C76, C81, C82, C83, C84, C85, C86, C87, gamma, d1, d2, d3, d4, d5, c2, c3, c4, c5 = cache.tab
 
     # Assignments
@@ -2404,6 +2424,8 @@ end
 
     u .+= k8
 
+    step_limiter!(u, integrator, p, t + dt)
+
     if integrator.opts.adaptive
         calculate_residuals!(atmp, k8, uprev, u, integrator.opts.abstol,
             integrator.opts.reltol, integrator.opts.internalnorm, t)
@@ -2425,7 +2447,7 @@ end
 @muladd function perform_step!(integrator, cache::Rosenbrock5Cache{<:Array},
         repeat_step = false)
     @unpack t, dt, uprev, u, f, p = integrator
-    @unpack du, du1, du2, k1, k2, k3, k4, k5, k6, k7, k8, dT, J, W, uf, tf, linsolve_tmp, jac_config, atmp, weight = cache
+    @unpack du, du1, du2, k1, k2, k3, k4, k5, k6, k7, k8, dT, J, W, uf, tf, linsolve_tmp, jac_config, atmp, weight, step_limiter = cache
     @unpack a21, a31, a32, a41, a42, a43, a51, a52, a53, a54, a61, a62, a63, a64, a65, C21, C31, C32, C41, C42, C43, C51, C52, C53, C54, C61, C62, C63, C64, C65, C71, C72, C73, C74, C75, C76, C81, C82, C83, C84, C85, C86, C87, gamma, d1, d2, d3, d4, d5, c2, c3, c4, c5 = cache.tab
 
     # Assignments
@@ -2704,6 +2726,8 @@ end
         u[i] += k8[i]
     end
 
+    step_limiter!(u, integrator, p, t + dt)
+
     if integrator.opts.adaptive
         calculate_residuals!(atmp, k8, uprev, u, integrator.opts.abstol,
             integrator.opts.reltol, integrator.opts.internalnorm, t)
@@ -2724,5 +2748,5 @@ end
     cache.linsolve = linres.cache
 end
 
-@RosenbrockW6S4OS(:init)
-@RosenbrockW6S4OS(:performstep)
+#@RosenbrockW6S4OS(:init)
+#@RosenbrockW6S4OS(:performstep)

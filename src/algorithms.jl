@@ -3005,18 +3005,20 @@ for Alg in [
     :Rodas5P
 ]
     @eval begin
-        struct $Alg{CS, AD, F, P, FDT, ST, CJ} <:
+        struct $Alg{CS, AD, F, P, FDT, ST, CJ, StepLimiter} <:
                OrdinaryDiffEqRosenbrockAdaptiveAlgorithm{CS, AD, FDT, ST, CJ}
             linsolve::F
             precs::P
+            step_limiter!::StepLimiter
         end
         function $Alg(; chunk_size = Val{0}(), autodiff = Val{true}(),
                 standardtag = Val{true}(), concrete_jac = nothing,
-                diff_type = Val{:forward}, linsolve = nothing, precs = DEFAULT_PRECS)
+                diff_type = Val{:forward}, linsolve = nothing, 
+                precs = DEFAULT_PRECS, step_limiter! = trivial_limiter!)
             $Alg{_unwrap_val(chunk_size), _unwrap_val(autodiff), typeof(linsolve),
                 typeof(precs), diff_type, _unwrap_val(standardtag),
                 _unwrap_val(concrete_jac)}(linsolve,
-                precs)
+                precs, step_limiter!)
         end
     end
 

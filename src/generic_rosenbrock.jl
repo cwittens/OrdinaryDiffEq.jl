@@ -222,7 +222,7 @@ function gen_algcache(cacheexpr::Expr,constcachename::Symbol,algname::Symbol,tab
             end
         end
     end
-
+    
     quote
         function alg_cache(alg::$algname,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUnits,tTypeNoUnits,uprev,uprev2,f,t,dt,reltol,p,calck,::Val{false})
             tf = TimeDerivativeWrapper(f,u,p)
@@ -1316,6 +1316,7 @@ macro ROS34PW(part)
         push!(cacheexprs,gen_algcache(cacheexpr,constcachename,:ROS34PRw,ROS34PRwtabname))
         push!(cacheexprs,gen_algcache(cacheexpr,constcachename,:ROS3PRL,ROS3PRLtabname))
         push!(cacheexprs,gen_algcache(cacheexpr,constcachename,:ROS3PRL2,ROS3PRL2tabname))
+        println(gen_algcache(cacheexpr,constcachename,:ROS34PW1a,ROS34PW1atabname))
         return esc(quote $(cacheexprs...) end)
     elseif part.value==:init
         return esc(gen_initialize(cachename,constcachename))
